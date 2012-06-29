@@ -79,6 +79,8 @@
 /* PTE EFUSE register. */
 #define QFPROM_PTE_EFUSE_ADDR	(MSM_QFPROM_BASE + 0x00C0)
 
+#define FREQ_TABLE_SIZE    33
+
 enum scalables {
 	CPU0 = 0,
 	CPU1,
@@ -382,6 +384,7 @@ static struct msm_bus_paths bw_level_tbl[] = {
 	[4] = BW_MBPS(3200), /* At least 400 MHz on bus. */
 	[5] = BW_MBPS(3600), /* At least 450 MHz on bus. */
 	[6] = BW_MBPS(3936), /* At least 492 MHz on bus. */
+	[7] = BW_MBPS(4264), /* At least 533 MHz on bus. */
 };
 
 static struct msm_bus_scale_pdata bus_client_pdata = {
@@ -748,8 +751,8 @@ static struct acpu_level acpu_freq_tbl_8960_kraitv2_nom[] = {
 static struct acpu_level acpu_freq_tbl_8960_kraitv2_fast[] = {
 	{ 0, { STBY_KHZ, QSB,   0, 0, 0x00 }, L2(0),   850000 },
 	{ 1, {   384000, PLL_8, 0, 2, 0x00 }, L2(1),   850000 },
-	{ 0, {   432000, HFPLL, 2, 0, 0x20 }, L2(7),   875000 },
-	{ 1, {   486000, HFPLL, 2, 0, 0x24 }, L2(7),   875000 },
+	{ 0, {   432000, HFPLL, 2, 0, 0x20 }, L2(7),   850000 },
+	{ 1, {   486000, HFPLL, 2, 0, 0x24 }, L2(7),   850000 },
 	{ 0, {   540000, HFPLL, 2, 0, 0x28 }, L2(7),   900000 },
 	{ 1, {   594000, HFPLL, 1, 0, 0x16 }, L2(7),   900000 },
 	{ 0, {   648000, HFPLL, 1, 0, 0x18 }, L2(7),   925000 },
@@ -766,9 +769,12 @@ static struct acpu_level acpu_freq_tbl_8960_kraitv2_fast[] = {
 	{ 1, {  1242000, HFPLL, 1, 0, 0x2E }, L2(16), 1100000 },
 	{ 0, {  1296000, HFPLL, 1, 0, 0x30 }, L2(16), 1125000 },
 	{ 1, {  1350000, HFPLL, 1, 0, 0x32 }, L2(16), 1125000 },
-	{ 0, {  1404000, HFPLL, 1, 0, 0x34 }, L2(16), 1137500 },
+	{ 0, {  1404000, HFPLL, 1, 0, 0x34 }, L2(16), 1125000 },
 	{ 1, {  1458000, HFPLL, 1, 0, 0x36 }, L2(16), 1137500 },
-	{ 1, {  1512000, HFPLL, 1, 0, 0x38 }, L2(16), 1150000 },
+	{ 1, {  1512000, HFPLL, 1, 0, 0x38 }, L2(18), 1150000 },
+	{ 1, {  1674000, HFPLL, 1, 0, 0x3A }, L2(18), 1175000 },
+	{ 1, {  1728000, HFPLL, 1, 0, 0x3C }, L2(19), 1200000 },
+	{ 1, {  1809000, HFPLL, 1, 0, 0x3E }, L2(19), 1250000 },
 	{ 0, { 0 } }
 };
 
@@ -1474,7 +1480,7 @@ static void __init bus_init(unsigned int init_bw)
 }
 
 #ifdef CONFIG_CPU_FREQ_MSM
-static struct cpufreq_frequency_table freq_table[NR_CPUS][30];
+static struct cpufreq_frequency_table freq_table[NR_CPUS][FREQ_TABLE_SIZE];
 
 static void __init cpufreq_table_init(void)
 {
@@ -1599,24 +1605,12 @@ static struct acpu_level * __init select_freq_plan(void)
 		switch (pvs) {
 		case 0x0:
 		case 0x7:
-			pr_alert("ACPU PVS: Slow\n");
-			v1 = acpu_freq_tbl_8960_kraitv1_slow;
-			v2 = acpu_freq_tbl_8960_kraitv2_slow;
-			break;
 		case 0x1:
-			pr_alert("ACPU PVS: Nominal\n");
-			v1 = acpu_freq_tbl_8960_kraitv1_nom_fast;
-			v2 = acpu_freq_tbl_8960_kraitv2_nom;
-			break;
 		case 0x3:
+		default:
 			pr_alert("ACPU PVS: Fast\n");
 			v1 = acpu_freq_tbl_8960_kraitv1_nom_fast;
 			v2 = acpu_freq_tbl_8960_kraitv2_fast;
-			break;
-		default:
-			pr_err("ACPU PVS: Unknown. Defaulting to slow.\n");
-			v1 = acpu_freq_tbl_8960_kraitv1_slow;
-			v2 = acpu_freq_tbl_8960_kraitv2_slow;
 			break;
 		}
 
