@@ -7456,8 +7456,9 @@ static s32 wl_notifier_change_state(struct wl_priv *wl, struct net_info *_net_in
 						if (connected_cnt  > 1) {
 							if (!prev_chan && chan)
 								prev_chan = chan;
-							else if (prev_chan && (prev_chan != chan))
+							else if (prev_chan && (prev_chan != chan)) {
 								wl->vsdb_mode = true;
+							}
 						}
 					}
 				}
