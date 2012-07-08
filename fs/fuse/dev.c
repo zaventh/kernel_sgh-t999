@@ -286,7 +286,7 @@ void fuse_queue_forget(struct fuse_conn *fc, struct fuse_forget_link *forget,
 	if (fc->connected) {
 		fc->forget_list_tail->next = forget;
 		fc->forget_list_tail = forget;
-		wake_up(&fc->waitq[is_rt(fc)]);
+		wake_up(&fc->waitq);
 		kill_fasync(&fc->fasync, SIGIO, POLL_IN);
 	} else {
 		kfree(forget);
@@ -1541,7 +1541,7 @@ static int fuse_retrieve(struct fuse_conn *fc, struct inode *inode,
 	else if (outarg->offset + num > file_size)
 		num = file_size - outarg->offset;
 
-	while (num) {
+	while (num && req->num_pages < FUSE_MAX_PAGES_PER_REQ) {
 		struct page *page;
 		unsigned int this_num;
 
@@ -1555,6 +1555,7 @@ static int fuse_retrieve(struct fuse_conn *fc, struct inode *inode,
 
 		num -= this_num;
 		total_len += this_num;
+		index++;
 	}
 	req->misc.retrieve_in.offset = outarg->offset;
 	req->misc.retrieve_in.size = total_len;
