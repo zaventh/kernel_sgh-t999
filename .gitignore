@@ -120,4 +120,6 @@ scripts/mod/mk_elfconfig
 scripts/mod/modpost
 usr/gen_init_cpio
 
-
+# Random stuff
+*.patch
+*.rej
